@@ -1,6 +1,6 @@
 
-from sympy.logic.boolalg import Or, And, truth_table, Equivalent
-from sympy import to_cnf
+from sympy.logic.boolalg import Or, And, truth_table, Equivalent 
+from sympy import to_cnf, false
 from sympy.logic.inference import satisfiable
 
 class Base:
@@ -27,40 +27,39 @@ class Base:
     
     def tell(self,sen,action, bSet, order):
 
-        models = satisfiable(sen, all_models=True)
-        sat = False
-        for model in models:
-            if model:
-                # Do something with the model.
-                sat = True
-            else:
-                # Given expr is unsatisfiable.
-                print("Unsatisfiable Belief")
-
-        if sat:
-            if action=='r': 
-                self.revision(sen)
-            elif action=='c':
-                self.contraction(sen)
-            elif action=='e':
-                self.expansion(sen)
         
+        if not (satisfiable(sen) == false):
+            if action=='r': 
+                self.revision(sen, bSet, order)
+            elif action=='c':
+                self.contraction(sen, bSet, order)
+            elif action=='e':
+                self.expansion(sen, bSet, order)
+        else:
+            print("Unsatisfiable Belief")
 
     '''
      If the agent receives new information that conflicts with one of the beliefs in the knowledge base, 
      it will revise its belief base by removing the lower-priority belief and adding the new information in its place.
     '''
-    def revision(self, sen):
-        self.beliefs.append(sen)
-        print(sen)
+    def revision(self, sen, bSet, order):
+        if bSet in self.beliefs:
+            self.beliefs[bSet][order].append(sen)
+        else:
+            self.beliefs[bSet] = (order, [sen])
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.    
-    def expansion(self,sen):
-        self.beliefs.append(sen)
+    def expansion(self,sen, bSet, order):
+        if bSet in self.beliefs:
+            self.beliefs[bSet][order].append(sen)
+        else:
+            self.beliefs[bSet] = (order, [sen])
+       
 
     # Function for contraction that removes a belief and its consequences from the knowledge base.
-    def contraction(self,sen):
-        self.beliefs.remove(sen)
+    def contraction(self,sen, bSet, order):
+        if bSet in self.beliefs:
+            self.beliefs[bSet][order].remove(sen)
 
     
 
