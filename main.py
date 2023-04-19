@@ -12,7 +12,6 @@ def helper():
     t: Show example of a belief base 
     e: Expansion of belief base
     c: Contraction of belief base
-    r: Revision of belief base 
     b: Show belief base
     h: Help
     q: Exit
@@ -26,6 +25,11 @@ def getExamples():
         Disjunction -> A | B | C
         Negation -> ~A & ~B 
 
+        Belief Base -> {
+            "Game1" : [(0.5,[A & B & C , (A>>B) & (B>>A)]), (0.7,[A | B | C])]
+            "Game2" : [...]
+        }
+
         In case of invalid sequence even though the operators used and the sequence in general is correct, try to change the letters.
         Letters that are tested are A , B , C , M , N , X , Y , Z
         This is written because of an error arised when letter E was used.
@@ -36,7 +40,7 @@ def parseInput(b):
     action = input()
     if action == 't':
         print(f"{getExamples()}")
-    elif action == 'e'or action == 'c' or action == 'r' :
+    elif action == 'e'or action == 'c':
         print("Write the belief for which to apply the selected action")
         sentence = input()
         print("Write the Belief Set that this belief is included")

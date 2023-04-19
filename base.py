@@ -13,15 +13,17 @@ class Base:
     #----------------------------------------------------------------
     # AGM postulates for testing purposes
     #----------------------------------------------------------------
-    def _success():
+    def _closure(self):
         return True
-    def _inclusion():
+    def _success(self):
         return True
-    def _vacuity():
+    def _inclusion(self):
         return True
-    def _consistency():
+    def _vacuity(self):
         return True
-    def _extensionality():
+    def _consistency(self):
+        return True
+    def _extensionality(self):
         return True
     #----------------------------------------------------------------
     
@@ -29,9 +31,7 @@ class Base:
 
         
         if not (satisfiable(sen) == false):
-            if action=='r': 
-                self.revision(sen, bSet, order)
-            elif action=='c':
+            if action=='c':
                 self.contraction(sen, bSet, order)
             elif action=='e':
                 self.expansion(sen, bSet, order)
@@ -60,8 +60,6 @@ class Base:
     def contraction(self,sen, bSet, order):
         if bSet in self.beliefs:
             self.beliefs[bSet][order].remove(sen)
-
-    
 
 
 # -------------------------------------------------------------------
