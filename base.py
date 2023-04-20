@@ -61,7 +61,7 @@ class Base:
         if bSet in self.beliefs:
             self.beliefs[bSet][order].remove(sen)
             
-    def getKN(self):
+    def getKB(self):
         return self.beliefs
 
 
