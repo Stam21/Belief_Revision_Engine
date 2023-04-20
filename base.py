@@ -30,7 +30,7 @@ class Base:
     def tell(self,sen,action, bSet, order):
 
         
-        if not (satisfiable(sen) == false):
+        if not (satisfiable(sen) == false):# why not use: "if satisfiable(sen) != Fasle:" Note: sympy.fasle == False returns True
             if action=='c':
                 self.contraction(sen, bSet, order)
             elif action=='e':
@@ -60,6 +60,9 @@ class Base:
     def contraction(self,sen, bSet, order):
         if bSet in self.beliefs:
             self.beliefs[bSet][order].remove(sen)
+            
+    def getKN(self):
+        return self.beliefs
 
 
 # -------------------------------------------------------------------
@@ -80,6 +83,7 @@ def entailment(base,sentence):
         new_clauses = set()
 
         # Generate all possible pairs of clauses for resolution
+        
         for i, ci in enumerate(clauses):
             for j, cj in enumerate(clauses):
                 if i >= j:
@@ -103,6 +107,9 @@ def entailment(base,sentence):
         clauses += list(new_clauses)
 
 def resolve(ci, cj):
+    #does tis code sccount for the posibility of different
+    #elements of ci or cj canceling amongst themselfs ?
+    
     """
     Generate all clauses that can be obtained by applying
     the resolution rule on ci and cj.
