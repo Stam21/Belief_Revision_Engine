@@ -7,34 +7,34 @@ class Base:
 
     def __init__(self):
         # The belief base is a dictionary that has as keys the name of its sets and as values tuples that store the order and a list of beliefs with that order.
-        self.beliefs = { }
+        self.beliefs = []
         self.symbols = set()
   
     #----------------------------------------------------------------
     # AGM postulates for testing purposes
     #----------------------------------------------------------------
-    def _closure(self):
-        return True
+    #def _closure(self):
+    #    return True
     def _success(self):
         return True
     def _inclusion(self):
         return True
     def _vacuity(self):
         return True
-    def _consistency(self):
-        return True
+    #def _consistency(self): #ask the professor about it
+    #    return True
     def _extensionality(self):
         return True
     #----------------------------------------------------------------
     
-    def tell(self,sen,action, bSet, order):
+    def tell(self,sen,action, order):
 
         
         if not (satisfiable(sen) == false):# why not use: "if satisfiable(sen) != Fasle:" Note: sympy.fasle == False returns True
             if action=='c':
-                self.contraction(sen, bSet, order)
+                self.contraction(sen, order)
             elif action=='e':
-                self.expansion(sen, bSet, order)
+                self.expansion(sen, order)
         else:
             print("Unsatisfiable Belief")
 
@@ -42,24 +42,20 @@ class Base:
      If the agent receives new information that conflicts with one of the beliefs in the knowledge base, 
      it will revise its belief base by removing the lower-priority belief and adding the new information in its place.
     '''
-    def revision(self, sen, bSet, order):
-        if bSet in self.beliefs:
-            self.beliefs[bSet][order].append(sen)
-        else:
-            self.beliefs[bSet] = (order, [sen])
+    def revision(self, sen, order):
+        self.beliefs.append([order,sen])
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.    
-    def expansion(self,sen, bSet, order):
-        if bSet in self.beliefs:
-            self.beliefs[bSet][order].append(sen)
-        else:
-            self.beliefs[bSet] = (order, [sen])
+    def expansion(self,sen, order):
+        self.beliefs.append([order,sen])
        
 
     # Function for contraction that removes a belief and its consequences from the knowledge base.
-    def contraction(self,sen, bSet, order):
-        if bSet in self.beliefs:
-            self.beliefs[bSet][order].remove(sen)
+    def contraction(self,sen, order):
+        for elem in self.beliefs:
+            if (elem[1] == sen):
+                self.beliefs.remove(elem)
+                break
             
     def getKB(self):
         return self.beliefs
