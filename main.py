@@ -26,7 +26,7 @@ def getExamples():
         Negation -> ~A & ~B 
 
         Belief Base -> [
-            [3.1,"(A>>B)|C&D")],[2, "W"],[0,"B"]
+            [3.1,"(A>>B)|C&D)"],[2, "W"],[0,"B"]
          ]
 
         In case of invalid sequence even though the operators used and the sequence in general is correct, try to change the letters.
