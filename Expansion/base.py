@@ -22,8 +22,8 @@ class Base:
         self._reorder_beliefs_line = []
 
         # each belief assigned an order(between 0 and 1)
-    def _add_reorder_belief_line(self, formula, order):
-        self._reorder_beliefs_line.append(formula, Decimal(order))
+    #def _add_reorder_belief_line(self, formula, order):
+     #   self._reorder_beliefs_line.append(formula, Decimal(order))
 
     # run commands in change the order of queue
     def _run_reorder_belief_line(self):
