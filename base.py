@@ -3,18 +3,20 @@ from sympy.logic.boolalg import Or, And, truth_table, Equivalent
 from sympy import to_cnf, false
 from sympy.logic.inference import satisfiable
 
+from copy import deepcopy
+
 class Base:
 
     def __init__(self):
         # The belief base is a dictionary that has as keys the name of its sets and as values tuples that store the order and a list of beliefs with that order.
-        self.beliefs = { }
+        self.beliefs = [[10, to_cnf("A & B")],[1, to_cnf("B & ~A")]]
         self.symbols = set()
   
     #----------------------------------------------------------------
     # AGM postulates for testing purposes
     #----------------------------------------------------------------
-    def _closure(self):
-        return True
+    #def _closure(self):
+    #    return True
     def _success(self):
         return True
     def _inclusion(self):
@@ -27,14 +29,14 @@ class Base:
         return True
     #----------------------------------------------------------------
     
-    def tell(self,sen,action, bSet, order):
+    def tell(self,sen,action, order):
 
         
-        if not (satisfiable(sen) == false):
+        if not (satisfiable(sen) == false):# why not use: "if satisfiable(sen) != Fasle:" Note: sympy.fasle == False returns True
             if action=='c':
-                self.contraction(sen, bSet, order)
+                self.contraction(sen, order)
             elif action=='e':
-                self.expansion(sen, bSet, order)
+                self.expansion(sen, order)
         else:
             print("Unsatisfiable Belief")
 
@@ -42,24 +44,24 @@ class Base:
      If the agent receives new information that conflicts with one of the beliefs in the knowledge base, 
      it will revise its belief base by removing the lower-priority belief and adding the new information in its place.
     '''
-    def revision(self, sen, bSet, order):
-        if bSet in self.beliefs:
-            self.beliefs[bSet][order].append(sen)
-        else:
-            self.beliefs[bSet] = (order, [sen])
+    def revision(self, sen, order):
+        self.beliefs.append([order,sen])
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.    
-    def expansion(self,sen, bSet, order):
-        if bSet in self.beliefs:
-            self.beliefs[bSet][order].append(sen)
-        else:
-            self.beliefs[bSet] = (order, [sen])
+    def expansion(self,sen, order):
+        entailment([], sen)
+        self.beliefs.append([order,sen])
        
 
     # Function for contraction that removes a belief and its consequences from the knowledge base.
-    def contraction(self,sen, bSet, order):
-        if bSet in self.beliefs:
-            self.beliefs[bSet][order].remove(sen)
+    def contraction(self,sen, order):
+        for elem in self.beliefs:
+            if (elem[1] == sen):
+                self.beliefs.remove(elem)
+                break
+            
+    def getKB(self):
+        return self.beliefs
 
 
 # -------------------------------------------------------------------
@@ -67,56 +69,60 @@ class Base:
 # -------------------------------------------------------------------
 def entailment(base,sentence):
     
-    clauses = [clause for f in base for clause in splitByOperator(And,f)]
+    clauses = [clause for f in base for clause in splitByOperator("&",f[1])]
     
     # Add negation of formula to clauses
-    clauses += splitByOperator(Or,~sentence)
+    clauses += splitByOperator("&",to_cnf(~sentence))
 
     # Check if there is already a False in the clauses
     if False in clauses:
         return True
-
-    while True:
-        new_clauses = set()
-
-        # Generate all possible pairs of clauses for resolution
-        for i, ci in enumerate(clauses):
-            for j, cj in enumerate(clauses):
-                if i >= j:
-                    continue
-
-                # Try to resolve ci and cj
-                resolvents = resolve(ci, cj)
-
-                # Check if resolvents contain False
-                if any(resolvent == False for resolvent in resolvents):
-                    return True
-
-                # Add non-tautological resolvents to new_clauses
-                new_clauses |= {resolvent for resolvent in resolvents if resolvent != True and resolvent not in clauses}
-
-        # Check if all new_clauses are already in clauses
-        if all(clause in clauses for clause in new_clauses):
-            return False
-
-        # Update clauses with new_clauses
-        clauses += list(new_clauses)
+    
+    print("fC", clauses)
+    for x in range(len(clauses)):
+        for y in range(x+1, len(clauses)):
+            if (clauses[x] == "" or clauses[y] == ""):
+                continue
+            f,s = resolve(clauses[x],clauses[y])
+            print("resolvants",f,s)
+            firstS = ""
+            if len(f)>0:
+                firstS = list(f)[0]
+                for elem in list(f)[1:]:
+                    firstS = firstS+"|"+elem
+            clauses[x] = firstS
+            
+            secondS = ""
+            if len(s)>0:
+                secondS = list(s)[0]
+                for elem in list(s)[1:]:
+                    secondS = secondS+"|"+elem
+            clauses[y] = secondS
+            print("clases",clauses)
+            
+                
+    return len(clauses) == clauses.count("")
+        
 
 def resolve(ci, cj):
+    
     """
     Generate all clauses that can be obtained by applying
     the resolution rule on ci and cj.
     """
 
-    rci = splitByOperator(Or,ci)
-    rcj = splitByOperator(Or,cj)
-    resolvents = {(rci - {ri}) | (rcj - {rj}) for ri in rci for rj in rcj if ri == ~rj or ~ri == rj}
-    sorted_resolvents = []
-    for resolvent in resolvents:
-        resolvent = list(resolvent)
-        resolvent.sort(key=str)
-        sorted_resolvents.append(Or(*resolvent))
-    return sorted_resolvents
+    rci = splitByOperator("|",ci)
+    rcj = splitByOperator("|",cj)
+    print("rci", rci, "rcj", rcj)
+    copyRci = deepcopy(rci)
+    copyRcj = deepcopy(rcj)
+    for ri in rci:
+        for rj in rcj:
+            #print(ri,rj)
+            if to_cnf(ri) == ~to_cnf(rj):
+                copyRci.discard(ri)
+                copyRcj.discard(rj)
+    return copyRci, copyRcj
 
 
 #----------------------------------------------------------------
@@ -130,21 +136,15 @@ def getSymbols(items, clause):
     
     return clause
 
-def splitByOperator(op, clause : str) -> list:
+def splitByOperator(op, clause) -> list:
 
     # e.g If the op is OR and the clause is A | B then it returns [A, B].
     # If the op is AND and the clause is (A|B) & (C|D) then it returns [A|B, C|D].
-    splits = []
-    stack = list(clause)
-
-    while stack:
-        arg = stack.pop()
-        if arg.op == op:
-            stack.extend(reversed(arg.clause))
-        else:
-            splits.append(arg)
-
-    return splits
+    strClause = str(clause).replace(" ", "")
+    strClause = str(strClause).replace("(", "")
+    strClause = str(strClause).replace(")", "")
+    splits = strClause.split(op)
+    return set(splits)
 
 
 
