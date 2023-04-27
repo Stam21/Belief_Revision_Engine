@@ -20,20 +20,6 @@ class Base:
         self.beliefs = [[10, to_cnf("A & B")],[1, to_cnf("B & C")]]
         self.symbols = set()
         self._reorder_beliefs_line = []
-
-        # each belief assigned an order(between 0 and 1)
-    #def _add_reorder_belief_line(self, formula, order):
-     #   self._reorder_beliefs_line.append(formula, Decimal(order))
-
-    # run commands in change the order of queue
-    def _run_reorder_belief_line(self):
-        for sen, order in self._reorder_beliefs_line:
-            self.symbols.remove(sen)  # then ignore sen(belief) with order 0
-            if order > 0:
-                sen.order = order
-                self.symbols.add(sen)
-        self._add_reorder_belief_line = []        
-
     # ----------------------------------------------------------------
     # AGM postulates for testing purposes
     # ----------------------------------------------------------------
@@ -43,7 +29,7 @@ class Base:
 
     def _success(self):
         return True
-#_____________________________________-
+    #------------------------------------------------------------------
     def _inclusion(self):  # K(set of belief) * p(new blief) subset K + p
     # define set K and p
         K = set(belief[1] for belief in self.beliefs)
@@ -68,7 +54,7 @@ class Base:
 
     def _consistency(self):  # ask the professor about it
         return True
-#____________________________________________
+    # ------------------------------------------------------------------
     def _extensionality(self):   # if (p<=> p) is set Cn{}, then K*p = K *p
         ## p = Equivalent('p', 'p')
         #return True 
