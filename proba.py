@@ -70,9 +70,8 @@ def entailment(base,sentence):
     #Split the base by the AND operator   
     clauses = [clause for f in base for clause in splitByOperator("&",f)]
     clauses += splitByOperator("&",to_cnf(~sentence))
-    print(clauses, "clauses")
     
-
+    new=[]
     # Check if there is already a False in the clauses
     
     for x in range(len(clauses)):
@@ -80,17 +79,20 @@ def entailment(base,sentence):
             #Do nothing when empty clauses are found
             if (clauses[x] == "" or clauses[y] == ""):
                 continue
-            f,s = resolve(clauses[x],clauses[y])
             
+            f = resolve(clauses[x],clauses[y])
             
-
             #if resolvents contains the empty clause then return true
-            if "" in f or "" in s:
+            inc=0
+            for elem in f:
+                if elem !="":
+                    inc=inc+1
+            if(inc==0):
                 return True
-               
+              
             #new ←new ∪ resolvents
             new.append(f)
-            new.append(s)
+            #new.append(s)
 
     #if new ⊆ clauses then return false 
     for elem in new:
@@ -123,33 +125,10 @@ def resolve(ci, cj):
     
     cnti=0
     cntj=0
-    for ri in rci:
+    for ri in copyRci:
         cntj=0
-        for rj in rcj:
-            print(ri, rj)
+        for rj in copyRcj:
             
-            '''
-            not_copyRci=~(copyRci[ri])
-            not_copyRcj=~(copyRcj[rj])
-            negateRi=str(not_copyRci)
-            negateRj=str(not_copyRcj)
-            if copyRci[ri] == negateRj or negateRi == copyRcj[rj]:
-                copyRci[ri]=""
-                copyRcj[rj]=""
-            
-            if("~" in copyRci[ri]):
-                negateRi = copyRci[ri].replace("~", "")
-            else:
-                negateRi = Not(copyRci[ri]) 
-            
-            if("~" in copyRcj[rj]):
-                negateRj = copyRcj[rj].replace("~", "")
-            else:
-                negateRj = Not(copyRcj[rj]) 
-            negateRi=str(negateRi)
-            negateRj=str(negateRj)
-            print(rci[ri], negateRj, negateRi, copyRcj[rj])
-            '''
             #if to_cnf(ri) == ~to_cnf(rj) or ~to_cnf(ri) == to_cnf(rj):
             if to_cnf(ri) == ~to_cnf(rj):
                 copyRci[cnti]=""
@@ -157,37 +136,23 @@ def resolve(ci, cj):
             cntj+=1
         cnti+=1
     
-   
+    #Only care about the updated sentences in the belief set not the sentence
     copyRci=np.unique(copyRci)
-    copyRcj=np.unique(copyRcj)          
-    return copyRci, copyRcj
+    
+    return copyRci
     
 
 
 #Example beelief set and sentence
 
 
-beliefs = [to_cnf("A|B")]
+beliefs = [to_cnf("A&C"),to_cnf("D")]
 sentence = to_cnf("B")
 #Check whether the entailment returns true or false
 if(entailment(beliefs, sentence)):
     print(True)
 else:
     print(False)    
-
-
-
-#print(splitByOperator("&", beliefs[0]))
-#senten=And(beliefs,  sen)
-#print(senten)
-#print(to_cnf(senten))
-
-#beliefs = [to_cnf("~A|A"), to_cnf("B|~B")]
-#belief_base=beliefs
-#contraction(beliefs, to_cnf("B"))
-
-#success(belief_base, beliefs, to_cnf("B|~B"))
-
 
 
 
