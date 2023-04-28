@@ -6,6 +6,7 @@ import sympy
 from copy import deepcopy
 import numpy as np
 
+#The success AGM postulate
 def success(beliefs, beliefs_contracted, sentence):
         iselement_belief=False
         iselement_belief_contracted=False
@@ -21,8 +22,27 @@ def success(beliefs, beliefs_contracted, sentence):
             return True
         else:
             return False    
-    
 
+#The inclusion postulate
+def inclusion(beliefs, beliefs_contracted):
+    flag = False
+    if(all(x in beliefs for x in beliefs_contracted)):
+        flag = True
+    return flag        
+
+#The Vacuity postulate
+def vacuity(beliefs, beliefs_contracted, sentence):
+    
+    if not(entailment(beliefs, sentence)):
+        if(beliefs==beliefs_contracted):
+            return True
+        else:
+            return False
+    else:
+        return True
+
+#The extensionality postulate
+#def extensionality(beliefs, beliefs_contracted):
 
 def contraction(beliefs,sen):
         
@@ -123,17 +143,17 @@ def resolve(ci, cj):
 #Example beelief set and sentence
 
 
-beliefs = ["A&B&C&D", "A&B"]
+beliefs = ["A&B"]
 sentence = to_cnf("B")
 
 #Testing code for entailment
-'''
+
 if(entailment(beliefs, sentence)):
     print(True)
 else:
     print(False)    
 
-'''
+
 #Section for calling contraction
 #create a copy in order to eliminate the issues arising with indexing
 
@@ -154,8 +174,10 @@ print(copy_beliefs)
 
 
 #Testing section for the Success postulate, should return true
-
 print(success(beliefs, copy_beliefs, sentence))
 
+#Testing section for the Inclusion postulate, should return true
+print(inclusion(beliefs, copy_beliefs))
 
-#success(beliefs, , sentence)
+#Testing section for the vacuity postulate, should return true
+print(vacuity(beliefs, copy_beliefs, sentence))
