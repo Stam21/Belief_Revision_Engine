@@ -6,38 +6,54 @@ import sympy
 from copy import deepcopy
 import numpy as np
 
+#The success AGM postulate
 def success(beliefs, beliefs_contracted, sentence):
+        iselement_belief=False
+        iselement_belief_contracted=False
+        for elem in beliefs:
+           if(elem==sentence):
+                iselement=True
         
-    for element in beliefs:
+        for elem2 in beliefs_contracted:
+           if(elem2==sentence):
+                iselement_belief_contracted=True  
+               
+        if(iselement_belief==iselement_belief_contracted):
+            return True
+        else:
+            return False    
 
-        if(sympy.logic.inference.valid(element)):
-            if(sympy.logic.inference.inference_algorithm(beliefs_contracted, sentence)==False):
-                print("Success")
+#The inclusion postulate
+def inclusion(beliefs, beliefs_contracted):
+    flag = False
+    if(all(x in beliefs for x in beliefs_contracted)):
+        flag = True
+    return flag        
 
+#The Vacuity postulate
+def vacuity(beliefs, beliefs_contracted, sentence):
+    
+    if not(entailment(beliefs, sentence)):
+        if(beliefs==beliefs_contracted):
+            return True
+        else:
+            return False
+    else:
+        return True
+
+#The extensionality postulate
+#def extensionality(beliefs, beliefs_contracted):
 
 def contraction(beliefs,sen):
-        for elem in beliefs:
-            if (elem == sen):
-                beliefs.remove(elem)
-                break        
-
-def splitByOperator(op, clause : str) -> list:
-
-    # e.g If the op is OR and the clause is A | B then it returns [A, B].
-    # If the op is AND and the clause is (A|B) & (C|D) then it returns [A|B, C|D].
-    splits = []
-    stack = str(clause)
-
-    op_index=0
-    for elem in range(0, len(stack)):
         
-        if stack[elem] == op:
+        if(entailment(beliefs, sen)):
+            return True
+        else:
+            return False
+          
+                       
 
-            splits[elem]=stack[op_index, elem]
-            op_index=elem+1
-            
 
-    return splits
 
 def splitByOperator(op, clause) -> list:
 
@@ -49,24 +65,6 @@ def splitByOperator(op, clause) -> list:
 
 def entailment(base,sentence):
 
-    
-    '''
-    print(base, sentence)
-    #Add the not alphas to the base, by iterating through the base and adding the not alphas to each element
-    for f in range(0, len(base)):
-        base[f]=to_cnf(And(base[f],sentence))
-    
-    print(base)
-    
-    #Convert the base to a list of strings and remove the parenthesis
-    list(base)
-    for f in range(0, len(base)):
-        base[f]=str(base[f])
-        if "(" in base[f]:
-            base[f]=base[f].replace("(", "")
-        if ")" in base[f]:
-            base[f]=base[f].replace(")", "")
-    '''
     #Split the base by the AND operator   
     clauses = [clause for f in base for clause in splitByOperator("&",f)]
     clauses += splitByOperator("&",to_cnf(~sentence))
@@ -125,11 +123,10 @@ def resolve(ci, cj):
     
     cnti=0
     cntj=0
-    for ri in copyRci:
+    for ri in rci:
         cntj=0
-        for rj in copyRcj:
+        for rj in rcj:
             
-            #if to_cnf(ri) == ~to_cnf(rj) or ~to_cnf(ri) == to_cnf(rj):
             if to_cnf(ri) == ~to_cnf(rj):
                 copyRci[cnti]=""
                 copyRcj[cntj]="" 
@@ -146,13 +143,41 @@ def resolve(ci, cj):
 #Example beelief set and sentence
 
 
-beliefs = [to_cnf("A&C"),to_cnf("D")]
+beliefs = ["A&B"]
 sentence = to_cnf("B")
-#Check whether the entailment returns true or false
+
+#Testing code for entailment
+
 if(entailment(beliefs, sentence)):
     print(True)
 else:
     print(False)    
 
 
+#Section for calling contraction
+#create a copy in order to eliminate the issues arising with indexing
 
+copy_beliefs=deepcopy(beliefs)
+cnt=0
+
+for elem in beliefs:
+    curr_beliefs=[to_cnf(elem)]
+    print("curr elem: ", elem)
+    
+    if(contraction(curr_beliefs, sentence)):
+       
+        del copy_beliefs[cnt]
+        cnt=cnt-1
+    cnt=cnt+1
+print(copy_beliefs)
+
+
+
+#Testing section for the Success postulate, should return true
+print(success(beliefs, copy_beliefs, sentence))
+
+#Testing section for the Inclusion postulate, should return true
+print(inclusion(beliefs, copy_beliefs))
+
+#Testing section for the vacuity postulate, should return true
+print(vacuity(beliefs, copy_beliefs, sentence))
