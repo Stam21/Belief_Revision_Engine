@@ -58,11 +58,15 @@ def extensionality(beliefs, beliefs_contracted1, beliefs_contracted2, sentence1,
 
 
 def contraction(beliefs,sen):
-        
+    copy_beliefs=deepcopy(beliefs)
+    cnt=0
+    for elem in beliefs:
+        curr_beliefs=[to_cnf(elem)]
         if(entailment(beliefs, sen)):
-            return True
-        else:
-            return False
+            del copy_beliefs[cnt]
+            cnt=cnt-1
+        cnt=cnt+1
+    return copy_beliefs
           
                        
 
@@ -158,8 +162,8 @@ def resolve(ci, cj):
 #Example beelief set and sentence
 
 
-beliefs = [to_cnf("A")]
-sentence = to_cnf("A&B")
+beliefs = [to_cnf("A|B")]
+sentence = to_cnf("A")
 
 #Testing code for entailment
 
@@ -174,7 +178,7 @@ else:
 
 copy_beliefs=deepcopy(beliefs)
 cnt=0
-
+'''
 for elem in beliefs:
     curr_beliefs=[to_cnf(elem)]
     print("curr elem: ", elem)
@@ -185,9 +189,10 @@ for elem in beliefs:
         cnt=cnt-1
     cnt=cnt+1
 print(copy_beliefs)
-
-
-
+'''
+#Test contraction
+cont_beliefs=contraction(beliefs, sentence)
+print(cont_beliefs)
 #Testing section for the Success postulate, should return true
 print(success(beliefs, copy_beliefs, sentence))
 
