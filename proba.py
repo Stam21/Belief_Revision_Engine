@@ -42,14 +42,31 @@ def vacuity(beliefs, beliefs_contracted, sentence):
         return True
 
 #The extensionality postulate
-#def extensionality(beliefs, beliefs_contracted):
+def extensionality(beliefs, beliefs_contracted1, beliefs_contracted2, sentence1, sentence2):
+    iselement_belief=False
+    if(sentence1==sentence2):
+        for elem in beliefs:
+           if(elem==sentence1):
+                if(beliefs_contracted1==beliefs_contracted2):
+                    return True
+                else:
+                    return False
+    return True
+
+    
+
+
 
 def contraction(beliefs,sen):
-        
+    copy_beliefs=deepcopy(beliefs)
+    cnt=0
+    for elem in beliefs:
+        curr_beliefs=[to_cnf(elem)]
         if(entailment(beliefs, sen)):
-            return True
-        else:
-            return False
+            del copy_beliefs[cnt]
+            cnt=cnt-1
+        cnt=cnt+1
+    return copy_beliefs
           
                        
 
@@ -60,6 +77,8 @@ def splitByOperator(op, clause) -> list:
     # e.g If the op is OR and the clause is A | B then it returns [A, B].
     # If the op is AND and the clause is (A|B) & (C|D) then it returns [A|B, C|D].
     strClause = str(clause).replace(" ", "")
+    strClause = str(strClause).replace("(", "")
+    strClause = str(strClause).replace(")", "")
     splits = strClause.split(op)
     return list(splits)
 
@@ -143,8 +162,8 @@ def resolve(ci, cj):
 #Example beelief set and sentence
 
 
-beliefs = ["A&B"]
-sentence = to_cnf("B")
+beliefs = [to_cnf("A|B")]
+sentence = to_cnf("A")
 
 #Testing code for entailment
 
@@ -159,7 +178,7 @@ else:
 
 copy_beliefs=deepcopy(beliefs)
 cnt=0
-
+'''
 for elem in beliefs:
     curr_beliefs=[to_cnf(elem)]
     print("curr elem: ", elem)
@@ -170,9 +189,10 @@ for elem in beliefs:
         cnt=cnt-1
     cnt=cnt+1
 print(copy_beliefs)
-
-
-
+'''
+#Test contraction
+cont_beliefs=contraction(beliefs, sentence)
+print(cont_beliefs)
 #Testing section for the Success postulate, should return true
 print(success(beliefs, copy_beliefs, sentence))
 
@@ -181,3 +201,6 @@ print(inclusion(beliefs, copy_beliefs))
 
 #Testing section for the vacuity postulate, should return true
 print(vacuity(beliefs, copy_beliefs, sentence))
+
+#Testing the extensionality postulate, should return true
+#print(extensionality(beliefs, copy_beliefs, copy_beliefs, sentence, sentence))
