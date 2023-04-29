@@ -19,14 +19,57 @@ class Base:
     #    return True
     def _success(self):
         return True
-    def _inclusion(self):
-        return True
+    def _inclusion(self, b):
+
+        def _inclusion(self):  # K(set of belief) * p(new blief) subset K 
+    # define set K and p
+        K = set(belief[1] for belief in self.beliefs)
+    # check if p is already in K
+        if  p in K:    
+         return True
+        
+    # Check if K' is a subset of K * p 
+        K = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
+        #by copying current belief base (self.belief)add p to it
+
+        K.append([0, p]) #add p to K'
+        for belief in K:
+            ## 'And' used to combine multi-belief into single expression for input satisfiable
+            if satisfiable(And(K, set([belief]))) and not satisfiable(And(K)):
+                return False  # K * p is not a superset of K + p   
+        return True # K * p is a superset of K + p 
+        
     def _vacuity(self):
         return True
     def _consistency(self):
         return True
     def _extensionality(self):
-        return True
+        # if (p<=> p) is set Cn{}, then K ÷ p = K ÷q
+        # it gurantee the logical of contraction is extentional
+        #create two prositional symbols p and q
+        p = Symbol('p')
+        q = Symbol('q')
+        # create two equivalant propositional formulas
+        f1 = p >> q 
+        f2 = q >> p
+        #convert them into to_CNF
+        f1_cnf = to_cnf(f1) # we create a belief base using thoses to check
+        f2_cnf = to_cnf(f2) #K*f1 is equivalent to K*f2
+
+        # create a belief base with f1, and check that K*f1 equivalent to K*f2
+        b = Base()
+        #expansion method to expand the belief base bb with given prepositional formula f1-cnf
+        #(0.5) is degree of belief represent as number between 0,and 1
+        b.expansion(f1_cnf, 0.5) # 0.5 represent moderate degree of belief or uncertainty 
+        Kf1 = b.get_consequence(to_cnf(p >> f1_cnf)) # logical sequence of B set Cn(B)
+        Kf2 = b.get_consequence(to_cnf(p >> f2_cnf)) 
+        assert Kf1 == Kf2, "K*f1 is not eqiuvalent to K*f2"
+        # Check that K*f2 is equivalent to K*f1
+        Kf2 = b.get_consequence(to_cnf(p >> f2_cnf))
+        Kf1 = b.get_consequence(to_cnf( p >>f1_cnf))
+        #to verify formulas are equivelant as expect equivalence f1, f2
+        assert Kf2 == Kf1, "K*f2 is not equivalent to K*f1"
+        
     #----------------------------------------------------------------
     
     def tell(self,sen,action, order):
