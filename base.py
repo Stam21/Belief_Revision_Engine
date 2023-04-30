@@ -84,13 +84,11 @@ class Base:
         return True # K * p is a superset of K + p
 
     def vacuity_expansion(self): # GEORGIOS
-
         return True
 
 
     def consistency_expansion(self,p): #NEEDS TO BE TESTED
         # B(K) ∗ φ(p) is consistent if φ(p) is consistent.
-
         K_p = deepcopy(self.beliefs)
         K_p.append([0, p])
         # Check if B_phi is consistent by checking if it is satisfiable
@@ -169,6 +167,7 @@ class Base:
     def revision_contraction(self, sen, order):
         init_beliefs = deepcopy(self.beliefs)
         delete = []
+        highestDeleteOrder = -1
         keep = []
         for elem in self.beliefs:
             if elem[1] != to_cnf(sen):
@@ -176,14 +175,24 @@ class Base:
                 if entailment(keep, sen):
                     keep.pop(-1)
                     delete.append(elem)
+                    if (elem[0]>highestDeleteOrder):
+                        highestDeleteOrder = elem[0]
             else:
+                if (elem[0]>highestDeleteOrder):
+                    highestDeleteOrder = elem[0]
                 delete.append(elem)
 
         if len(keep)>0:
-            self.beliefs = keep
-            print("The following beliefs have been deleted as they entailed the beliefe that was to be removed:")
-            for elem in delete:
-                print(elem[1])
+            if highestDeleteOrder < order:
+                self.beliefs = keep
+                if len(delete)>0:
+                    print("The following beliefs have been deleted as they entailed the beliefe that was to be removed:")
+                    for elem in delete:
+                        print(elem[1])
+                else:
+                    print("The element is neither a part of the BB nor is it entailed by it. Therefore no believes will be removed.")
+            else:
+                print("The contraction will not take place as it would remove one or more formulas with a higher priority than the one stated for the operation (", highestDeleteOrder, ">", order,")")
         else:
             print("The operation will erase all beliefs due to their entailment, are you sure you want to procede ? Y/N")
             answ = input()

@@ -3,7 +3,7 @@
 Main function that opens the cli prompt communicates with the belief revision engine.
 '''
 from sympy import SympifyError, to_cnf
-from base import Base
+from base import Base, entailment
 
 
 def helper(): 
@@ -13,6 +13,7 @@ def helper():
     e: Expansion of belief base
     c: Contraction of belief base
     b: Show belief base
+    i: Ask a question to the agent
     h: Help
     q: Exit
     """)
@@ -57,6 +58,15 @@ def parseInput(b):
         for belief in b.getKB():
             print(f"{belief}")
     
+    elif action == 'i':
+        print("Write the belief for which to apply the selected action")
+        sentence = input()
+        sentence = sentence.replace("?", "")
+        if entailment(b.getKB(), to_cnf(sentence)):
+            print("I believe so.")
+        else:
+            print("I do not believe so.")
+    
     elif action == 'h':
         helper()
     elif action == 'q':
@@ -69,8 +79,12 @@ def parseInput(b):
         parseInput(b)
 
 def main():
-   
+    
     b = Base()
+    print("The initial believe base consists of the following belives:")
+    print("Order, Sentence")
+    for belief in b.getKB():
+        print(f"{belief}")
     parseInput(b)
     
 
