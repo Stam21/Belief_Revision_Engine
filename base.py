@@ -1,15 +1,14 @@
 
 from sympy.logic.boolalg import Or, And, truth_table, Equivalent 
-from sympy import to_cnf, false
+from sympy import to_cnf, false, Symbol
 from sympy.logic.inference import satisfiable
-
 from copy import deepcopy
 
 class Base:
 
     def __init__(self):
         # The belief base is a dictionary that has as keys the name of its sets and as values tuples that store the order and a list of beliefs with that order.
-        self.beliefs = [[10, to_cnf("A & B")],[1, to_cnf("B & ~A")]]
+        self.beliefs = [[10, to_cnf("A & B")],[10, to_cnf("A | B")],[10, to_cnf("B")]]
         self.symbols = set()
   
     #----------------------------------------------------------------
@@ -19,14 +18,14 @@ class Base:
     #    return True
     def _success(self):
         return True
-    def _inclusion(self, b):
+  
 
-        def _inclusion(self):  # K(set of belief) * p(new blief) subset K 
-    # define set K and p
+    def _inclusion(self, p):  # K(set of belief) * p(new blief) subset K 
+        # define set K and p
         K = set(belief[1] for belief in self.beliefs)
-    # check if p is already in K
+        # check if p is already in K
         if  p in K:    
-         return True
+            return True
         
     # Check if K' is a subset of K * p 
         K = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
@@ -87,21 +86,72 @@ class Base:
      If the agent receives new information that conflicts with one of the beliefs in the knowledge base, 
      it will revise its belief base by removing the lower-priority belief and adding the new information in its place.
     '''
-    def revision(self, sen, order):
-        self.beliefs.append([order,sen])
+    def revision(self, sen, action, order=0):
+        if action == "c":
+            return self.revision_contraction(sen)
+        elif action == "e":
+            return self.revision_expansion(sen, order)
+
+    def revision_expansion(self, sen, order):
+        if (entailment(self.beliefs, sen)):
+            print("The new beliefe will not be added in order to prevent redundancy.")
+            return False
+        else:
+            statement = "(" + str(sen) + ")"
+            for elem in self.beliefs:
+                statement = statement + "&(" + str(elem[1]) + ")"
+            
+            print(statement)
+            if not satisfiable(to_cnf(statement)):
+                print("The new belief will not be added as it contradicts a previous belief.")
+                return False
+            
+            else:
+                print("The beliefe", sen, "can be added to the bb with an order of", order)
+                return True
+            
+    
+    def revision_contraction(self, sen):
+        
+        delete = []
+        keep = []
+        for elem in self.beliefs:
+            if elem[1] != to_cnf(sen):
+                keep.append(elem)
+                if entailment(keep, sen):
+                    keep.pop(-1)
+                    delete.append(elem)
+        
+        if len(keep)>0:
+            self.beliefs = keep
+            print("The following beliefs have been deleted as they entailed the beliefe that was to be removed:")
+            for elem in delete:
+                print(elem[1])
+            return True
+        else:
+            print("The operation will erase all beliefs due to their entailment, are you sure you want to procede ? Y/N")
+            answ = input()
+            if (answ == y):
+                self.beliefs = keep
+                print("All beliefs have been deleted")
+                return True
+            else:
+                return False
+                
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.    
     def expansion(self,sen, order):
-        entailment([], sen)
-        self.beliefs.append([order,sen])
+        if self.revision(sen, "e", order):
+            self.beliefs.append([order,sen])
        
 
     # Function for contraction that removes a belief and its consequences from the knowledge base.
-    def contraction(self,sen, order):
+    def contraction(self,sen):
         for elem in self.beliefs:
             if (elem[1] == sen):
-                self.beliefs.remove(elem)
-                break
+                if self.revision(sen, "c"):
+                    self.beliefs.remove(elem)
+                    break
             
     def getKB(self):
         return self.beliefs
@@ -121,13 +171,13 @@ def entailment(base,sentence):
     if False in clauses:
         return True
     
-    print("fC", clauses)
+    #print("fC", clauses)
     for x in range(len(clauses)):
         for y in range(x+1, len(clauses)):
             if (clauses[x] == "" or clauses[y] == ""):
                 continue
             f,s = resolve(clauses[x],clauses[y])
-            print("resolvants",f,s)
+            #print("resolvants",f,s)
             firstS = ""
             if len(f)>0:
                 firstS = list(f)[0]
@@ -141,7 +191,7 @@ def entailment(base,sentence):
                 for elem in list(s)[1:]:
                     secondS = secondS+"|"+elem
             clauses[y] = secondS
-            print("clases",clauses)
+            #print("clases",clauses)
             
                 
     return len(clauses) == clauses.count("")
@@ -156,7 +206,7 @@ def resolve(ci, cj):
 
     rci = splitByOperator("|",ci)
     rcj = splitByOperator("|",cj)
-    print("rci", rci, "rcj", rcj)
+    #print("rci", rci, "rcj", rcj)
     copyRci = deepcopy(rci)
     copyRcj = deepcopy(rcj)
     for ri in rci:
