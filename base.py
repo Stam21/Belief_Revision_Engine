@@ -22,20 +22,22 @@ class Base:
     #----------------------------------------------------------------
     #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
     def success_contraction(self, beliefs, beliefs_contracted, sentence):
-            iselement_belief=False
-            iselement_belief_contracted=False
+        beliefs = changeBBModel(beliefs)
+        iselement_belief=False
+        iselement_belief_contracted=False
 
-            for elem2 in beliefs_contracted:
-               if(elem2==sentence):
-                    iselement_belief_contracted=True
+        for elem2 in beliefs_contracted:
+           if(elem2==sentence):
+                iselement_belief_contracted=True
 
-            if(iselement_belief==iselement_belief_contracted):
-                return True
-            else:
+        if(iselement_belief==iselement_belief_contracted):
+            return True
+        else:
                 return False
 
     #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
     def inclusion_contraction(self, beliefs, beliefs_contracted):
+        beliefs = changeBBModel(beliefs)
         flag = False
         if(all(x in beliefs for x in beliefs_contracted)):
             flag = True
@@ -43,7 +45,7 @@ class Base:
 
     #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
     def vacuity_contraction(self, beliefs, beliefs_contracted, sentence):
-
+        beliefs = changeBBModel(beliefs)
         if not(entailment(beliefs, sentence)):
             if(beliefs==beliefs_contracted):
                 return True
@@ -54,6 +56,7 @@ class Base:
 
     #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
     def extensionality_contraction(self, beliefs, beliefs_contracted1, beliefs_contracted2, sentence1, sentence2):
+        beliefs = changeBBModel(beliefs)
         if(sentence1==sentence2):
             for elem in beliefs:
                if(elem==sentence1):
@@ -232,7 +235,8 @@ class Base:
 # Entailment checker for a new belief
 # -------------------------------------------------------------------
 def entailment(base,sentence):
-
+    
+    base = changeBBModel(base)
     #Split the base by the AND operator
     clauses = [clause for f in base for clause in splitByOperator("&",f)]
     clauses += splitByOperator("&",to_cnf(~sentence))
@@ -322,7 +326,11 @@ def splitByOperator(op, clause) -> list:
     splits = strClause.split(op)
     return list(splits)
 
-
+def changeBBModel(base):
+    bb = []
+    for elem in base:
+        bb.append(elem[1])
+    return bb
 
 #----------------------------------------------------------------
 
