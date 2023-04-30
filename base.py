@@ -1,8 +1,9 @@
 
-from sympy.logic.boolalg import Or, And, truth_table, Equivalent 
+from sympy.logic.boolalg import And
 from sympy import to_cnf, false, Symbol
 from sympy.logic.inference import satisfiable
 from copy import deepcopy
+import numpy as np
 
 class Base:
 
@@ -14,6 +15,49 @@ class Base:
     #----------------------------------------------------------------
     # AGM postulates for testing purposes
     #----------------------------------------------------------------
+    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
+    def success_contraction(self, beliefs, beliefs_contracted, sentence):
+            iselement_belief=False
+            iselement_belief_contracted=False
+            
+            for elem2 in beliefs_contracted:
+               if(elem2==sentence):
+                    iselement_belief_contracted=True  
+                   
+            if(iselement_belief==iselement_belief_contracted):
+                return True
+            else:
+                return False    
+
+    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
+    def inclusion_contraction(self, beliefs, beliefs_contracted):
+        flag = False
+        if(all(x in beliefs for x in beliefs_contracted)):
+            flag = True
+        return flag        
+
+    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
+    def vacuity_contraction(self, beliefs, beliefs_contracted, sentence):
+        
+        if not(entailment(beliefs, sentence)):
+            if(beliefs==beliefs_contracted):
+                return True
+            else:
+                return False
+        else:
+            return True
+
+    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
+    def extensionality_contraction(self, beliefs, beliefs_contracted1, beliefs_contracted2, sentence1, sentence2):
+        if(sentence1==sentence2):
+            for elem in beliefs:
+               if(elem==sentence1):
+                    if(beliefs_contracted1==beliefs_contracted2):
+                        return True
+                    else:
+                        return False
+        return True
+    
     def _success(self):#DONE FOR CONTRACTION, EXPANSION ?? GEORGIOS
         return True
   
@@ -123,6 +167,8 @@ class Base:
                 if entailment(keep, sen):
                     keep.pop(-1)
                     delete.append(elem)
+            else:
+                delete.append(elem)
         
         if len(keep)>0:
             self.beliefs = keep
@@ -149,11 +195,9 @@ class Base:
 
     # Function for contraction that removes a belief and its consequences from the knowledge base.
     def contraction(self,sen):
-        for elem in self.beliefs:
-            if (elem[1] == sen):
-                if self.revision(sen, "c"):
-                    self.beliefs.remove(elem)
-                    break
+        self.revision(sen, "c")
+        
+
             
     def getKB(self):
         return self.beliefs
@@ -161,43 +205,44 @@ class Base:
 
 # -------------------------------------------------------------------
 # Entailment checker for a new belief
-# -------------------------------------------------------------------
+# -------------------------------------------------------------------    
 def entailment(base,sentence):
-    
-    clauses = [clause for f in base for clause in splitByOperator("&",f[1])]
-    
-    # Add negation of formula to clauses
-    clauses += splitByOperator("&",to_cnf(~sentence))
 
+    #Split the base by the AND operator   
+    clauses = [clause for f in base for clause in splitByOperator("&",f)]
+    clauses += splitByOperator("&",to_cnf(~sentence))
+    print("cl", clauses)
+    new=[]
     # Check if there is already a False in the clauses
-    if False in clauses:
-        return True
-    
-    #print("fC", clauses)
+    print("ln", len(clauses))
     for x in range(len(clauses)):
         for y in range(x+1, len(clauses)):
+            print("loop")
+            #Do nothing when empty clauses are found
             if (clauses[x] == "" or clauses[y] == ""):
                 continue
-            f,s = resolve(clauses[x],clauses[y])
-            #print("resolvants",f,s)
-            firstS = ""
-            if len(f)>0:
-                firstS = list(f)[0]
-                for elem in list(f)[1:]:
-                    firstS = firstS+"|"+elem
-            clauses[x] = firstS
             
-            secondS = ""
-            if len(s)>0:
-                secondS = list(s)[0]
-                for elem in list(s)[1:]:
-                    secondS = secondS+"|"+elem
-            clauses[y] = secondS
-            #print("clases",clauses)
+            f = resolve(clauses[x],clauses[y])
+            print("f", f)
             
-                
-    return len(clauses) == clauses.count("")
+            #if resolvents contains the empty clause then return true
+            for elem in f:
+                if elem =="":
+                    return True
+              
+            #new ←new ∪ resolvents
+            new.append(f)
+            #new.append(s)
+
+    #if new ⊆ clauses then return false 
+    for elem in new:
+        for elem2 in clauses:
+            if not np.array_equal(elem, elem2):
+                return False
         
+
+#belief = ["A"]
+#entailment(belief, to_cnf("(B>>A)&(A>>B)"))
 
 def resolve(ci, cj):
     
@@ -208,16 +253,27 @@ def resolve(ci, cj):
 
     rci = splitByOperator("|",ci)
     rcj = splitByOperator("|",cj)
-    #print("rci", rci, "rcj", rcj)
+    
     copyRci = deepcopy(rci)
     copyRcj = deepcopy(rcj)
+    
+    cnti=0
+    cntj=0
     for ri in rci:
+        cntj=0
         for rj in rcj:
-            #print(ri,rj)
+            
             if to_cnf(ri) == ~to_cnf(rj):
-                copyRci.discard(ri)
-                copyRcj.discard(rj)
-    return copyRci, copyRcj
+                copyRci[cnti]=""
+                copyRcj[cntj]="" 
+            cntj+=1
+        cnti+=1
+    
+    #Only care about the updated sentences in the belief set not the sentence
+    copyRci=np.unique(copyRci)
+    copyRcj=np.unique(copyRcj)
+    
+    return np.unique(np.append(copyRci, copyRcj))
 
 
 #----------------------------------------------------------------
@@ -239,7 +295,7 @@ def splitByOperator(op, clause) -> list:
     strClause = str(strClause).replace("(", "")
     strClause = str(strClause).replace(")", "")
     splits = strClause.split(op)
-    return set(splits)
+    return list(splits)
 
 
 
