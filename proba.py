@@ -6,8 +6,8 @@ import sympy
 from copy import deepcopy
 import numpy as np
 
-#The success AGM postulate
-def success(beliefs, beliefs_contracted, sentence):
+#The success AGM postulates for contraction
+def success_cont(beliefs, beliefs_contracted, sentence):
         iselement_belief=False
         iselement_belief_contracted=False
         for elem in beliefs:
@@ -24,14 +24,14 @@ def success(beliefs, beliefs_contracted, sentence):
             return False    
 
 #The inclusion postulate
-def inclusion(beliefs, beliefs_contracted):
+def inclusion_cont(beliefs, beliefs_contracted):
     flag = False
     if(all(x in beliefs for x in beliefs_contracted)):
         flag = True
     return flag        
 
 #The Vacuity postulate
-def vacuity(beliefs, beliefs_contracted, sentence):
+def vacuity_cont(beliefs, beliefs_contracted, sentence):
     
     if not(entailment(beliefs, sentence)):
         if(beliefs==beliefs_contracted):
@@ -42,7 +42,7 @@ def vacuity(beliefs, beliefs_contracted, sentence):
         return True
 
 #The extensionality postulate
-def extensionality(beliefs, beliefs_contracted1, beliefs_contracted2, sentence1, sentence2):
+def extensionality_cont(beliefs, beliefs_contracted1, beliefs_contracted2, sentence1, sentence2):
     iselement_belief=False
     if(sentence1==sentence2):
         for elem in beliefs:
@@ -62,7 +62,7 @@ def contraction(beliefs,sen):
     cnt=0
     for elem in beliefs:
         curr_beliefs=[to_cnf(elem)]
-        if(entailment(beliefs, sen)):
+        if(entailment(curr_beliefs, sen)):
             del copy_beliefs[cnt]
             cnt=cnt-1
         cnt=cnt+1
@@ -162,23 +162,24 @@ def resolve(ci, cj):
 #Example beelief set and sentence
 
 
-beliefs = [to_cnf("A|B")]
+beliefs = [to_cnf("A&B")]
 sentence = to_cnf("A")
 
 #Testing code for entailment
+
 
 if(entailment(beliefs, sentence)):
     print(True)
 else:
     print(False)    
-
+'''
 
 #Section for calling contraction
 #create a copy in order to eliminate the issues arising with indexing
 
 copy_beliefs=deepcopy(beliefs)
 cnt=0
-'''
+
 for elem in beliefs:
     curr_beliefs=[to_cnf(elem)]
     print("curr elem: ", elem)
@@ -189,7 +190,6 @@ for elem in beliefs:
         cnt=cnt-1
     cnt=cnt+1
 print(copy_beliefs)
-'''
 #Test contraction
 cont_beliefs=contraction(beliefs, sentence)
 print(cont_beliefs)
@@ -203,4 +203,4 @@ print(inclusion(beliefs, copy_beliefs))
 print(vacuity(beliefs, copy_beliefs, sentence))
 
 #Testing the extensionality postulate, should return true
-#print(extensionality(beliefs, copy_beliefs, copy_beliefs, sentence, sentence))
+#print(extensionality(beliefs, copy_beliefs, copy_beliefs, sentence, sentence))'''
