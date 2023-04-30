@@ -20,8 +20,8 @@ class Base:
     #----------------------------------------------------------------
     # AGM postulates for testing purposes
     #----------------------------------------------------------------
-    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
-    def success_contraction(self, beliefs, beliefs_contracted, sentence):
+
+    def success_contraction(self, beliefs, beliefs_contracted, sentence): #DONE
         beliefs = changeBBModel(beliefs)
         iselement_belief=False
         iselement_belief_contracted=False
@@ -34,18 +34,14 @@ class Base:
             return True
         else:
                 return False
-
-    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
-    def inclusion_contraction(self, beliefs, beliefs_contracted):
-        #beliefs = changeBBModel(beliefs)
+            
+    def inclusion_contraction(self, beliefs, beliefs_contracted): #DONE
         flag = False
         if(all(x in beliefs for x in beliefs_contracted)):
             flag = True
         return flag
 
-    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
-    def vacuity_contraction(self, beliefs, beliefs_contracted, sentence):
-        #beliefs = changeBBModel(beliefs)
+    def vacuity_contraction(self, beliefs, beliefs_contracted, sentence): #DONE
         if not(entailment(beliefs, sentence)):
             if(beliefs==beliefs_contracted):
                 return True
@@ -54,8 +50,7 @@ class Base:
         else:
             return True
 
-    #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
-    def extensionality_contraction(self, beliefs, beliefs_contracted1, beliefs_contracted2, sentence1, sentence2):
+    def extensionality_contraction(self, beliefs, beliefs_contracted1, beliefs_contracted2, sentence1, sentence2): #DONE
         beliefs = changeBBModel(beliefs)
         if(sentence1==sentence2):
             for elem in beliefs:
@@ -66,32 +61,18 @@ class Base:
                         return False
         return True
 
-    def _success(self):#DONE FOR CONTRACTION, EXPANSION ?? GEORGIOS
+    def success_expansion(self):#DONE FOR CONTRACTION, EXPANSION ?? GEORGIOS
         return True
 
-
-    def _inclusion(self, p): #KARRAR
+    def inclusion_expansion(self, p): #NEEDS TO BE TESTED
         # K(set of belief) * p(new blief) subset K
         # define set K and p
         K = set(belief[1] for belief in self.beliefs)
         # check if p is already in K
-        if  p in K:
-            return True
+        if p in K:
+         return True
 
         # Check if K' is a subset of K * p
-        K = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
-        def _success(self):
-            return True
-
-        def _inclusion(self, p):
-            # K(set of belief) * p(new blief) subset K
-            # define set K and p
-            K = set(belief[1] for belief in self.beliefs)
-        # check if p is already in K
-            if p in K:
-             return True
-
-    # Check if K' is a subset of K * p
         K_p = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
         #by copying current belief base (self.belief)add p to it
 
@@ -102,12 +83,13 @@ class Base:
                 return False  # K * p is not a superset of K + p
         return True # K * p is a superset of K + p
 
-    def _vacuity(self):
+    def vacuity_expansion(self): # GEORGIOS
 
         return True
 
 
-    def _consistency(self,p): # B(K) ∗ φ(p) is consistent if φ(p) is consistent.
+    def consistency_expansion(self,p): #NEEDS TO BE TESTED
+        # B(K) ∗ φ(p) is consistent if φ(p) is consistent.
 
         K_p = deepcopy(self.beliefs)
         K_p.append([0, p])
@@ -115,8 +97,8 @@ class Base:
         return satisfiable(And(set([belief[1] for belief in K_p])))
 
 
-    def _extensionality(self):
-         # if (p<=> p) is set Cn{}, then K ÷ p = K ÷q
+    def extensionality_expansion(self): #NEEDS TO BE TESTED
+        # if (p<=> p) is set Cn{}, then K ÷ p = K ÷q
         # it gurantee the logical of contraction is extentional
         #create two prositional symbols p and q
         p = Symbol('p')
@@ -161,7 +143,7 @@ class Base:
     '''
     def revision(self, sen, action,  order=0):
         if action == "c":
-            return self.revision_contraction(sen)
+            return self.revision_contraction(sen, order)
         elif action == "e":
             return self.revision_expansion(sen, order)
 
@@ -174,7 +156,6 @@ class Base:
             for elem in self.beliefs:
                 statement = statement + "&(" + str(elem[1]) + ")"
 
-            print(statement)
             if not satisfiable(to_cnf(statement)):
                 print("The new belief will not be added as it contradicts a previous belief.")
                 #keep the highest order beliefe, if same keep oldest
@@ -185,7 +166,7 @@ class Base:
                 return True
 
 
-    def revision_contraction(self, sen):
+    def revision_contraction(self, sen, order):
         init_beliefs = deepcopy(self.beliefs)
         delete = []
         keep = []
@@ -203,7 +184,6 @@ class Base:
             print("The following beliefs have been deleted as they entailed the beliefe that was to be removed:")
             for elem in delete:
                 print(elem[1])
-            return True
         else:
             print("The operation will erase all beliefs due to their entailment, are you sure you want to procede ? Y/N")
             answ = input()
@@ -211,11 +191,12 @@ class Base:
                 self.beliefs = keep
                 print("All beliefs have been deleted")
                 #return True
-            #else:
-                #return False
+
         #Check with the postulates whether the contraction was successful
         if not(self.success_contraction(init_beliefs, keep, sen) or self.inclusion_contraction(init_beliefs, keep) or self.vacuity_contraction(init_beliefs, keep, sen)):
             print("Error! The contraction did not respect the postulates.")
+        else:
+            print("All Good! The contraction did respect the postulates.")
 
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.
@@ -225,8 +206,8 @@ class Base:
 
 
     # Function for contraction that removes a belief and its consequences from the knowledge base.
-    def contraction(self,sen):
-        self.revision(sen, "c")
+    def contraction(self,sen, order):
+        self.revision(sen, "c", order)
 
 
 
@@ -272,7 +253,6 @@ def getExpresion(sen):
     for idx in range(0,len(sen)):
         if (sen[idx] != ""):
             exp = exp + sen[idx] +"|"
-    #print(exp[0:-1])
     return exp[0:-1]
 
 
