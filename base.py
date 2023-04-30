@@ -92,10 +92,22 @@ class Base:
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.    
     def expansion(self,sen, order):
-        entailment([], sen)
-        self.beliefs.append([order,sen])
-       
-
+       self.beliefs.append([order, sen]) # to the list of beliefs in KB
+        p = to_cnf(sen)  # then convert the sentence to CNF
+        order = order
+        validate_order(order)
+        #logger.debug(f'Expand with {p} and order {order}')
+        if not entailment([], ~p): # if ~p is entail by [], then p a contradiction ignor it,
+            # if not contraction, function check if p taugtology with [], 
+            if entailment([], p):
+                # if p is a tautology, assign the order of new belief to 1
+                order = (1)
+            else:
+                for belief in self.beliefs: #if not taugtology,
+                    q = belief.sen
+                    if belief.order > order:
+            
+                        continue
     # Function for contraction that removes a belief and its consequences from the knowledge base.
     def contraction(self,sen, order):
         for elem in self.beliefs:
