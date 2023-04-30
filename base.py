@@ -14,20 +14,19 @@ class Base:
     #----------------------------------------------------------------
     # AGM postulates for testing purposes
     #----------------------------------------------------------------
-    #def _closure(self):
-    #    return True
-    def _success(self):
+    def _success(self):#DONE FOR CONTRACTION, EXPANSION ??
         return True
   
 
-    def _inclusion(self, p):  # K(set of belief) * p(new blief) subset K 
+    def _inclusion(self, p):
+        # K(set of belief) * p(new blief) subset K 
         # define set K and p
         K = set(belief[1] for belief in self.beliefs)
         # check if p is already in K
         if  p in K:    
             return True
         
-    # Check if K' is a subset of K * p 
+        # Check if K' is a subset of K * p 
         K = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
         #by copying current belief base (self.belief)add p to it
 
@@ -38,10 +37,12 @@ class Base:
                 return False  # K * p is not a superset of K + p   
         return True # K * p is a superset of K + p 
         
-    def _vacuity(self):
+    def _vacuity(self):#DONE FOR CONTRACTION, EXPANSION ?? 
         return True
-    def _consistency(self):
+    
+    def _consistency(self):#NOT NEEDED FOR CONTRACTION, EXPANSION ??
         return True
+    
     def _extensionality(self):
         # if (p<=> p) is set Cn{}, then K ÷ p = K ÷q
         # it gurantee the logical of contraction is extentional
