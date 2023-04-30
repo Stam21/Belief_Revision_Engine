@@ -104,6 +104,7 @@ class Base:
             print(statement)
             if not satisfiable(to_cnf(statement)):
                 print("The new belief will not be added as it contradicts a previous belief.")
+                #keep the highest order beliefe, if same keep oldest
                 return False
             
             else:
@@ -131,7 +132,7 @@ class Base:
         else:
             print("The operation will erase all beliefs due to their entailment, are you sure you want to procede ? Y/N")
             answ = input()
-            if (answ == y):
+            if (answ == "y"):
                 self.beliefs = keep
                 print("All beliefs have been deleted")
                 return True
