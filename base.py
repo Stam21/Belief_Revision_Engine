@@ -14,11 +14,11 @@ class Base:
     #----------------------------------------------------------------
     # AGM postulates for testing purposes
     #----------------------------------------------------------------
-    def _success(self):#DONE FOR CONTRACTION, EXPANSION ??
+    def _success(self):#DONE FOR CONTRACTION, EXPANSION ?? GEORGIOS
         return True
   
 
-    def _inclusion(self, p):
+    def _inclusion(self, p): #KARRAR
         # K(set of belief) * p(new blief) subset K 
         # define set K and p
         K = set(belief[1] for belief in self.beliefs)
@@ -37,10 +37,10 @@ class Base:
                 return False  # K * p is not a superset of K + p   
         return True # K * p is a superset of K + p 
         
-    def _vacuity(self):#DONE FOR CONTRACTION, EXPANSION ?? 
+    def _vacuity(self):#DONE FOR CONTRACTION, EXPANSION ?? GEORGIOS
         return True
     
-    def _consistency(self):#NOT NEEDED FOR CONTRACTION, EXPANSION ??
+    def _consistency(self):#NOT NEEDED FOR CONTRACTION, EXPANSION ?? KARRAR
         return True
     
     def _extensionality(self):
