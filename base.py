@@ -37,7 +37,7 @@ class Base:
 
     #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
     def inclusion_contraction(self, beliefs, beliefs_contracted):
-        beliefs = changeBBModel(beliefs)
+        #beliefs = changeBBModel(beliefs)
         flag = False
         if(all(x in beliefs for x in beliefs_contracted)):
             flag = True
@@ -45,7 +45,7 @@ class Base:
 
     #beliefs in the form [["A"],["B"]]. CHECK WITH BENCE !!
     def vacuity_contraction(self, beliefs, beliefs_contracted, sentence):
-        beliefs = changeBBModel(beliefs)
+        #beliefs = changeBBModel(beliefs)
         if not(entailment(beliefs, sentence)):
             if(beliefs==beliefs_contracted):
                 return True
@@ -186,7 +186,7 @@ class Base:
 
 
     def revision_contraction(self, sen):
-
+        init_beliefs = deepcopy(self.beliefs)
         delete = []
         keep = []
         for elem in self.beliefs:
@@ -210,9 +210,12 @@ class Base:
             if (answ == "y"):
                 self.beliefs = keep
                 print("All beliefs have been deleted")
-                return True
-            else:
-                return False
+                #return True
+            #else:
+                #return False
+        #Check with the postulates whether the contraction was successful
+        if not(self.success_contraction(init_beliefs, keep, sen) or self.inclusion_contraction(init_beliefs, keep) or self.vacuity_contraction(init_beliefs, keep, sen)):
+            print("Error! The contraction did not respect the postulates.")
 
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.
@@ -234,30 +237,44 @@ class Base:
 # -------------------------------------------------------------------
 # Entailment checker for a new belief
 # -------------------------------------------------------------------
+def entaiment_tests():
+    beliefs = [[10, to_cnf("A & B")]] 
+    print("1", entailment(beliefs, to_cnf("A")) == True)# True - Pass
+    print("2", entailment(beliefs, to_cnf("B")) == True)# True - Pass
+    print("3", entailment(beliefs, to_cnf("A&B"))== True)# True - Pass
+    print("4", entailment(beliefs, to_cnf("A|B"))== True)# True - Pass
+    print("5", entailment(beliefs, to_cnf("A>>B"))== True)# True - Pass
+    print("6", entailment(beliefs, to_cnf("B>>A"))== True)# True - Pass
+    print("7", entailment(beliefs, to_cnf("(B>>A)&(A>>B)"))== True)# True - Pass
+    print("8", entailment(beliefs, to_cnf("~(A&B)"))== False)# False - Pass
+    print("9", entailment(beliefs, to_cnf("~A"))== False)# False - Pass
+    print("10", entailment(beliefs, to_cnf("~B"))== False)# False - Pass
+    print("11", entailment(beliefs, to_cnf("~A&B"))== False)# True - Fail P
+    print("12",entailment(beliefs, to_cnf("~B&A"))== False)# True - Fail P
+    
 
-#beliefs = [[10, to_cnf("A & B")]] 
-#entailment(belief, to_cnf("A")) True - Pass
-#entailment(belief, to_cnf("B")) False - Fail BP
-#entailment(belief, to_cnf("A&B")) True - Pass
-#entailment(belief, to_cnf("A|B")) True - Pass
-#entailment(belief, to_cnf("A>>B")) False - Fail BP
-#entailment(belief, to_cnf("B>>A")) True - Pass
-#entailment(belief, to_cnf("(B>>A)&(A>>B)")) True - Pass
-#entailment(belief, to_cnf("~(A&B)")) False - Pass
-#entailment(belief, to_cnf("~A")) False - Pass
-#entailment(belief, to_cnf("~B")) False - Pass
+    beliefs = [[10, to_cnf("A")]]
+    print("1", entailment(beliefs, to_cnf("A"))== True)# True - Pass
+    print("2", entailment(beliefs, to_cnf("B"))== False)# False - Pass
+    print("3", entailment(beliefs, to_cnf("A&B"))== False)# True - Fail P
+    print("4", entailment(beliefs, to_cnf("A|B"))== True)# True - Pass
+    print("5", entailment(beliefs, to_cnf("A>>B"))== False)# False - Pass
+    print("6", entailment(beliefs, to_cnf("B>>A"))== True)# True - Pass
+    print("7", entailment(beliefs, to_cnf("(B>>A)&(A>>B)"))== False)# True - Fail P
+    print("8", entailment(beliefs, to_cnf("~(A&B)"))== False)# False - Pass
+    print("9", entailment(beliefs, to_cnf("~A"))== False)# False - Pass
+    print("10", entailment(beliefs, to_cnf("~B"))== False)# False - Pass
+    print("11", entailment(beliefs, to_cnf("~A&B"))== False)# False - Pass
+    print("12", entailment(beliefs, to_cnf("~B&A"))== False)# True - Fail P
 
-#beliefs = [[10, to_cnf("A")]] 
-#entailment(belief, to_cnf("A")) True - Pass
-#entailment(belief, to_cnf("B")) False - Pass
-#entailment(belief, to_cnf("A&B")) True - Fail P
-#entailment(belief, to_cnf("A|B")) True - Pass
-#entailment(belief, to_cnf("A>>B")) False - Pass
-#entailment(belief, to_cnf("B>>A")) True - Pass
-#entailment(belief, to_cnf("(B>>A)&(A>>B)")) True - Fail P
-#entailment(belief, to_cnf("~(A&B)")) False - Pass
-#entailment(belief, to_cnf("~A")) False - Pass
-#entailment(belief, to_cnf("~B")) False - Pass
+def getExpresion(sen):
+    exp = ""
+    for idx in range(0,len(sen)):
+        if (sen[idx] != ""):
+            exp = exp + sen[idx] +"|"
+    #print(exp[0:-1])
+    return exp[0:-1]
+
 
 def entailment(base,sentence):
     
@@ -265,29 +282,42 @@ def entailment(base,sentence):
     #Split the base by the AND operator
     clauses = [clause for f in base for clause in splitByOperator("&",f)]
     clauses += splitByOperator("&",to_cnf(~sentence))
-    print("cl", clauses)
+    #print("cl", clauses)
     new=[]
     # Check if there is already a False in the clauses
-    print("ln", len(clauses))
+    #print("ln", len(clauses))
+    tempClauses = deepcopy(clauses)
     for x in range(len(clauses)):
+        tempX = np.unique(splitByOperator("|",clauses[x]))
         for y in range(x+1, len(clauses)):
-            print("loop")
+            #print("loop")
             #Do nothing when empty clauses are found
             if (clauses[x] == "" or clauses[y] == ""):
                 continue
 
             f = resolve(clauses[x],clauses[y])
-            print("f", f)
+            #print("f", f)
+            clauses[y] = getExpresion(f[1])
+            for elem in tempX:
+                if not elem in f[0]:
+                    elem = ""
+            f = np.unique(np.append(f[0],f[1]))
 
             #if resolvents contains the empty clause then return true
+            dist = False
             for elem in f:
-                if elem =="":
-                    return True
-
+                if elem !="":
+                    dist = True
+                    
+            if not dist:
+                return True
+            
             #new ←new ∪ resolvents
             new.append(f)
             #new.append(s)
-
+        clauses[x] = tempX
+        
+    clauses = tempClauses
     #if new ⊆ clauses then return false
     for elem in new:
         for elem2 in clauses:
@@ -327,7 +357,7 @@ def resolve(ci, cj):
     copyRci=np.unique(copyRci)
     copyRcj=np.unique(copyRcj)
 
-    return np.unique(np.append(copyRci, copyRcj))
+    return copyRci, copyRcj
 
 
 #----------------------------------------------------------------
