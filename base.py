@@ -22,22 +22,22 @@ class Base:
     def _success(self):
         return True
     
-    def _inclusion(self, K, p):
+    def _inclusion(self, p):
         # K(set of belief) * p(new blief) subset K 
         # define set K and p
         K = set(belief[1] for belief in self.beliefs)
     # check if p is already in K
-        if  entailment(K, p):    
+        if p in K:    
          return True
         
     # Check if K' is a subset of K * p 
-        K = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
+        K_p = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
         #by copying current belief base (self.belief)add p to it
 
-        K.append([0, p]) #add p to K'
-        for belief in K:
+        K_p.append([0, p]) #add p to K'
+        for belief in K_p:
             ## 'And' used to combine multi-belief into single expression for input satisfiable
-            if satisfiable(And(K, set([belief]))) and not satisfiable(And(K)):
+            if satisfiable(And(K, set([belief]))) and not satisfiable(And(K_p)):
                 return False  # K * p is not a superset of K + p   
         return True # K * p is a superset of K + p 
         
