@@ -234,6 +234,31 @@ class Base:
 # -------------------------------------------------------------------
 # Entailment checker for a new belief
 # -------------------------------------------------------------------
+
+#beliefs = [[10, to_cnf("A & B")]] 
+#entailment(belief, to_cnf("A")) True - Pass
+#entailment(belief, to_cnf("B")) False - Fail BP
+#entailment(belief, to_cnf("A&B")) True - Pass
+#entailment(belief, to_cnf("A|B")) True - Pass
+#entailment(belief, to_cnf("A>>B")) False - Fail BP
+#entailment(belief, to_cnf("B>>A")) True - Pass
+#entailment(belief, to_cnf("(B>>A)&(A>>B)")) True - Pass
+#entailment(belief, to_cnf("~(A&B)")) False - Pass
+#entailment(belief, to_cnf("~A")) False - Pass
+#entailment(belief, to_cnf("~B")) False - Pass
+
+#beliefs = [[10, to_cnf("A")]] 
+#entailment(belief, to_cnf("A")) True - Pass
+#entailment(belief, to_cnf("B")) False - Pass
+#entailment(belief, to_cnf("A&B")) True - Fail P
+#entailment(belief, to_cnf("A|B")) True - Pass
+#entailment(belief, to_cnf("A>>B")) False - Pass
+#entailment(belief, to_cnf("B>>A")) True - Pass
+#entailment(belief, to_cnf("(B>>A)&(A>>B)")) True - Fail P
+#entailment(belief, to_cnf("~(A&B)")) False - Pass
+#entailment(belief, to_cnf("~A")) False - Pass
+#entailment(belief, to_cnf("~B")) False - Pass
+
 def entailment(base,sentence):
     
     base = changeBBModel(base)
