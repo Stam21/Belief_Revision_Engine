@@ -61,7 +61,10 @@ class Base:
                         return False
         return True
 
-    def success_expansion(self):#DONE FOR CONTRACTION, EXPANSION ?? GEORGIOS
+    def success_expansion(self):#GEORGIOS
+        return True
+    
+    def vacuity_expansion(self): # GEORGIOS
         return True
 
     def inclusion_expansion(self, p): #NEEDS TO BE TESTED
@@ -82,10 +85,6 @@ class Base:
             if satisfiable(And(K, set([belief]))) and not satisfiable(And(K_p)):
                 return False  # K * p is not a superset of K + p
         return True # K * p is a superset of K + p
-
-    def vacuity_expansion(self): # GEORGIOS
-        return True
-
 
     def consistency_expansion(self,p): #NEEDS TO BE TESTED
         # B(K) ∗ φ(p) is consistent if φ(p) is consistent.
@@ -377,25 +376,27 @@ def changeBBModel(base):
     return bb
 
 #----------------------------------------------------------------
+#Test case for checking the contraction extensionality postulate
 
 
-#Commented code that might be useful using the getSymbols function and sympy's truth table
+def test_extensionality_contraction(base1: Base, base2: Base, sen):
+    
+    beliefs1=base1.getKB()
 
-# NewSymbols = set(getSymbols(['|','&','>>','~','(',')',' '],str(sentence)))
-# negated_sentence = to_cnf(~sentence)
-# # For every sentence in the knowledge base, we have to check for validity and satisfiability of the new sentence.
-# for sen in base:
-#     # Check only the sentences in which we can find symbols that are also in the new sentence.
-#     Symbols = set(getSymbols(['|','&','>>','~','(',')',' '],str(sen)))
-#     common_symbols = NewSymbols.intersection(Symbols)
-#     truth_table_New =  truth_table(sentence, common_symbols)
-#     truth_table_Current = truth_table(sen, common_symbols)
-#     validity = True
-#     # if (Equivalent(sentence,sen)):
+    beliefs_contracted1=base1.revision_contraction(sen, 2)
+    beliefs_contracted2=base2.revision_contraction(sen, 2)
 
-#     # if equivelant is true then break and it is entailed
-#     for a, b in zip(truth_table_Current, truth_table_New):
-#         if (a[1]== True) and (b[1]==False):
-#             validity = False
 
-#----------------------------------------------------------------
+    if(base1.extensionality_contraction(beliefs1, beliefs_contracted1, beliefs_contracted2, sen, sen)):
+        print("All Good! The contraction did respect the extensionality postulate.")
+    else:
+        print("The contraction did not respect the extensionality postulate.")
+        
+#Test case for checking the contraction extensionality postulate
+'''
+b=Base()
+c=Base()
+sen=to_cnf("A&B")
+test_extensionality_contraction(b, c, sen)
+'''
+
