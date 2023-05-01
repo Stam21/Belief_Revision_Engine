@@ -10,6 +10,7 @@ def validate_order(p):
     if not (0 <= p <= 10):
        raise false
 
+
 class Base:
 
     def __init__(self, beliefs=[[10, to_cnf("A & B")],[10, to_cnf("A | B")],[10, to_cnf("B")]]):
@@ -61,27 +62,19 @@ class Base:
                         return False
         return True
 
-    # K ∗ p = (K ÷ ¬p) + p Levi identity
-    def success_expansion(self, p):
-        b = Base()
-        b.contraction(~p,0.5)
-        b.expansion(p,0.5)
-        if p in self.beliefs:
-            return True
+    def success_expansion(self, sen):
+        return entailment(self.beliefs, to_cnf(sen))
+        
+    def vacuity_expansion(self, beliefs_init, sen, order):
+        beliefs_init.append([order, sen])
+        if not(entailment(beliefs_init, to_cnf(~sen))):
+
+            if(self.beliefs==beliefs_init):
+                return True
+            else:
+                return False
         else:
-            return False
-    def vacuity_expansion(self, p):
-        res= False
-        b1 = Base()
-        b2 = Base()
-        b1.beliefs, b2.beliefs = self.beliefs, self.beliefs
-        b1.contraction(~p,0.5)
-        b1.expansion(p, 0.5)
-        b2.expansion(p, 0.5)
-        if (b1==b2):
-            res = True
-        del b1, b2 
-        return res
+            return True
     
     def inclusion_expansion(self, bb, sen, revisedBb): #NEEDS TO BE TESTED
         if (self.consistency_expansion(bb,sen)):
@@ -105,32 +98,16 @@ class Base:
         return satisfiable(to_cnf(statement))
 
 
-    def extensionality_expansion(self): #NEEDS TO BE TESTED
-        # if (p<=> p) is set Cn{}, then K ÷ p = K ÷q
-        # it gurantee the logical of contraction is extentional
-        #create two prositional symbols p and q
-        p = Symbol('p')
-        q = Symbol('q')
-        # create two equivalant propositional formulas
-        f1 = p >> q
-        f2 = q >> p
-        #convert them into to_CNF
-        f1_cnf = to_cnf(f1) # we create a belief base using thoses to check
-        f2_cnf = to_cnf(f2) #K*f1 is equivalent to K*f2
-
-        # create a belief base with f1, and check that K*f1 equivalent to K*f2
-        b = Base()
-        #expansion method to expand the belief base bb with given prepositional formula f1-cnf
-        #(0.5) is degree of belief represent as number between 0,and 1
-        b.expansion(f1_cnf, 0.5) # 0.5 represent moderate degree of belief or uncertainty
-        Kf1 = b.get_consequence(to_cnf(p >> f1_cnf)) # logical sequence of B set Cn(B)
-        Kf2 = b.get_consequence(to_cnf(p >> f2_cnf))
-        assert Kf1 == Kf2, "K*f1 is not eqiuvalent to K*f2"
-        # Check that K*f2 is equivalent to K*f1
-        Kf2 = b.get_consequence(to_cnf(p >> f2_cnf))
-        Kf1 = b.get_consequence(to_cnf( p >>f1_cnf))
-        #to verify formulas are equivelant as expect equivalence f1, f2
-        assert Kf2 == Kf1, "K*f2 is not equivalent to K*f1"
+    def extensionality_expansion(self, beliefs, beliefs_expanded1, beliefs_expanded2, sentence1, sentence2): #DONE
+        beliefs = changeBBModel(beliefs)
+        if(sentence1==sentence2):
+            for elem in beliefs:
+               if(elem==sentence1):
+                    if(beliefs_expanded1==beliefs_expanded2):
+                        return True
+                    else:
+                        return False
+        return True
 
     #----------------------------------------------------------------
 
@@ -149,7 +126,7 @@ class Base:
      If the agent receives new information that conflicts with one of the beliefs in the knowledge base,
      it will revise its belief base by removing the lower-priority belief and adding the new information in its place.
     '''
-    def testExpansionAGMPostulates(self, bb, revisedBb, sen):
+    def testExpansionAGMPostulates(self, bb, revisedBb, sen, order):
         if (self.consistency_expansion(bb, sen)):
             print("The operation was consistent.")
         else:
@@ -160,15 +137,41 @@ class Base:
         else:
             print("FAIL. The operation was not inclusive.")
             
-    def testContractionAGMPostulates(self, bb, revisedBb, sen):
-        if (self.consistency_expansion(bb, sen)):
-            print("The operation was consistent.")
+        if (self.success_expansion(sen)):
+            print("The operation was succesfull.")
         else:
-            print("FAIL. The operation was not consistent.")
-        if (self.inclusion_expansion(bb, sen, revisedBb)):
+            print("FAIL. The operation was not succesfull.")
+            
+        if (self.vacuity_expansion(bb, sen, order)):
+            print("The operation was vacuous.")
+        else:
+            print("FAIL. The operation was not vacuous.")
+        
+        b=deepcopy(self)
+        c=deepcopy(b)
+        test_extensionality_expansion(b, c, sen)
+            
+        
+    def testContractionAGMPostulates(self, bb, revisedBb, sen, order):
+            
+        if (self.inclusion_contraction(bb, revisedBb)):
             print("The operation was inclusive.")
         else:
             print("FAIL. The operation was not inclusive.")
+            
+        if (self.success_contraction(bb, revisedBb, sen)):
+            print("The operation was succesfull.")
+        else:
+            print("FAIL. The operation was not succesfull.")
+            
+        if (self.vacuity_contraction(bb, revisedBb, sen)):
+            print("The operation was vacuous.")
+        else:
+            print("FAIL. The operation was not vacuous.")
+        
+        b=deepcopy(self)
+        c=deepcopy(b)
+        test_extensionality_contraction(b, c, sen)
     
     def revision(self, sen, action,  order=0):
         ret = False
@@ -178,34 +181,33 @@ class Base:
         elif action == "e":
             ret = self.revision_expansion(sen, order)
            
-            
+        #print("ret", ret)  
         if ret:
             revisedBb = deepcopy(self.beliefs)
             if action == "c":
-                self.testContractionAGMPostulates(bb, revisedBb, sen)
+                self.testContractionAGMPostulates(bb, revisedBb, sen, order)
             elif action == "e":
-                self.testExpansionAGMPostulates(bb, revisedBb, sen)
-        
+                self.testExpansionAGMPostulates(bb, revisedBb, sen, order)
         return ret
-        
-        
 
-    def revision_expansion(self, sen, order):
+    def revision_expansion(self, sen, order, mute=False):
         if (entailment(self.beliefs, sen)):
-            print("The new beliefe will not be added in order to prevent redundancy.")
+            if not mute:
+                print("The new beliefe will not be added in order to prevent redundancy.")
             return False
         else:
             if not self.consistency_expansion(self.beliefs, sen):
-                print("The new belief will not be added as it contradicts a previous belief.")
+                if not mute:
+                    print("The new belief will not be added as it contradicts a previous belief.")
                 return False
 
             else:
-                print("The beliefe", sen, "can be added to the bb with an order of", order)
+                if not mute:
+                    print("The beliefe", sen, "can be added to the bb with an order of", order)
+                self.beliefs.append([order,sen])
                 return True
 
-
-    def revision_contraction(self, sen, order):
-        init_beliefs = deepcopy(self.beliefs)
+    def revision_contraction(self, sen, order, mute=False):
         delete = []
         highestDeleteOrder = -1
         keep = []
@@ -223,35 +225,43 @@ class Base:
                 delete.append(elem)
 
         if len(keep)>0:
-            if highestDeleteOrder < order:
+            if highestDeleteOrder <= order:
                 self.beliefs = keep
                 if len(delete)>0:
-                    print("The following beliefs have been deleted as they entailed the beliefe that was to be removed:")
+                    if not mute:
+                        print("The following beliefs have been deleted as they entailed the beliefe that was to be removed:")
                     for elem in delete:
                         print(elem[1])
+                    return True
                 else:
-                    print("The element is neither a part of the BB nor is it entailed by it. Therefore no believes will be removed.")
+                    if not mute:
+                        print("The element is neither a part of the BB nor is it entailed by it. Therefore no believes will be removed.")
             else:
-                print("The contraction will not take place as it would remove one or more formulas with a higher priority than the one stated for the operation (", highestDeleteOrder, ">", order,")")
+                if not mute:
+                    print("The contraction will not take place as it would remove one or more formulas with a higher priority than the one stated for the operation (", highestDeleteOrder, ">", order,")")
         else:
-            print("The operation will erase all beliefs due to their entailment, are you sure you want to procede ? Y/N")
-            answ = input()
+            answ = "y"
+            if not mute:
+                print("The operation will erase all beliefs due to their entailment, are you sure you want to procede ? y/n")
+                answ = input()
             if (answ == "y"):
                 self.beliefs = keep
-                print("All beliefs have been deleted")
-                #return True
+                if not mute:
+                    print("All beliefs have been deleted")
+                return True
+        return False
 
         #Check with the postulates whether the contraction was successful
-        if not(self.success_contraction(init_beliefs, keep, sen) or self.inclusion_contraction(init_beliefs, keep) or self.vacuity_contraction(init_beliefs, keep, sen)):
-            print("Error! The contraction did not respect the postulates.")
-        else:
-            print("All Good! The contraction did respect the postulates.")
+        #if not(self.success_contraction(init_beliefs, keep, sen) or self.inclusion_contraction(init_beliefs, keep) or self.vacuity_contraction(init_beliefs, keep, sen)):
+        #    print("Error! The contraction did not respect the postulates.")
+        #else:
+        #    print("All Good! The contraction did respect the postulates.")
 
 
     # Function for expansion that adds a belief and its consequences in the knowledge base but taking into consideration consistency and contradiction.
     def expansion(self,sen, order):
-        if self.revision(sen, "e", order):
-            self.beliefs.append([order,sen])
+        self.revision(sen, "e", order)
+            
 
 
     # Function for contraction that removes a belief and its consequences from the knowledge base.
@@ -279,23 +289,36 @@ def entaiment_tests():
     print("8", entailment(beliefs, to_cnf("~(A&B)"))== False)# False - Pass
     print("9", entailment(beliefs, to_cnf("~A"))== False)# False - Pass
     print("10", entailment(beliefs, to_cnf("~B"))== False)# False - Pass
-    print("11", entailment(beliefs, to_cnf("~A&B"))== False)# True - Fail P
-    print("12",entailment(beliefs, to_cnf("~B&A"))== False)# True - Fail P
+    print("11", entailment(beliefs, to_cnf("~A&B"))== False)# False - Pass
+    print("12",entailment(beliefs, to_cnf("~B&A"))== False)# False - Pass
     
 
     beliefs = [[10, to_cnf("A")]]
     print("1", entailment(beliefs, to_cnf("A"))== True)# True - Pass
     print("2", entailment(beliefs, to_cnf("B"))== False)# False - Pass
-    print("3", entailment(beliefs, to_cnf("A&B"))== False)# True - Fail P
+    print("3", entailment(beliefs, to_cnf("A&B"))== False)# False -Pass
     print("4", entailment(beliefs, to_cnf("A|B"))== True)# True - Pass
     print("5", entailment(beliefs, to_cnf("A>>B"))== False)# False - Pass
     print("6", entailment(beliefs, to_cnf("B>>A"))== True)# True - Pass
-    print("7", entailment(beliefs, to_cnf("(B>>A)&(A>>B)"))== False)# True - Fail P
+    print("7", entailment(beliefs, to_cnf("(B>>A)&(A>>B)"))== False)# Fasle- Pass
     print("8", entailment(beliefs, to_cnf("~(A&B)"))== False)# False - Pass
     print("9", entailment(beliefs, to_cnf("~A"))== False)# False - Pass
     print("10", entailment(beliefs, to_cnf("~B"))== False)# False - Pass
     print("11", entailment(beliefs, to_cnf("~A&B"))== False)# False - Pass
     print("12", entailment(beliefs, to_cnf("~B&A"))== False)# True - Fail P
+    
+    beliefs = [[10, to_cnf("A | B")]]
+    print("1", entailment(beliefs, to_cnf("A|B"))== True)# True - Pass
+    
+    beliefs = [[10, to_cnf("A >> B")]]
+    print("1", entailment(beliefs, to_cnf("A>>B"))== True)# True - Pass
+    
+    beliefs = [[10, to_cnf("(A >> B) & (B>>A)")]]
+    print("1", entailment(beliefs, to_cnf("(A >> B) & (B>>A)"))== True)# True - Pass
+    
+    beliefs = [[10, to_cnf("~A")]]
+    print("1", entailment(beliefs, to_cnf("~A"))== True)# True - Pass
+    
 
 def getExpresion(sen):
     exp = ""
@@ -313,8 +336,6 @@ def entailment(base,sentence):
     clauses += splitByOperator("&",to_cnf(~sentence))
     #print("cl", clauses)
     new=[]
-    # Check if there is already a False in the clauses
-    #print("ln", len(clauses))
     tempClauses = deepcopy(clauses)
     for x in range(len(clauses)):
         tempX = np.unique(splitByOperator("|",clauses[x]))
@@ -325,11 +346,12 @@ def entailment(base,sentence):
                 continue
 
             f = resolve(clauses[x],clauses[y])
-            #print("f", f)
             clauses[y] = getExpresion(f[1])
-            for elem in tempX:
-                if not elem in f[0]:
-                    elem = ""
+            #print("TEMPX", tempX, "F0", f[0])
+            for idx in range(len(tempX)):
+                #print("elem", tempX[idx])
+                if not tempX[idx] in f[0]:
+                    tempX[idx] = ""
             f = np.unique(np.append(f[0],f[1]))
 
             #if resolvents contains the empty clause then return true
@@ -344,7 +366,17 @@ def entailment(base,sentence):
             #new ←new ∪ resolvents
             new.append(f)
             #new.append(s)
-        clauses[x] = tempX
+        #print(tempX)
+        clauses[x] =getExpresion(tempX)
+        #print("cl", clauses)
+    
+    dist = False
+    for elem in clauses:
+        if elem !="":
+            dist = True
+            
+    if not dist:
+        return True
         
     clauses = tempClauses
     #if new ⊆ clauses then return false
@@ -424,8 +456,8 @@ def test_extensionality_contraction(base1: Base, base2: Base, sen):
     
     beliefs1=base1.getKB()
 
-    beliefs_contracted1=base1.revision_contraction(sen, 2)
-    beliefs_contracted2=base2.revision_contraction(sen, 2)
+    beliefs_contracted1=base1.revision_contraction(sen, 2, True)
+    beliefs_contracted2=base2.revision_contraction(sen, 2, True)
 
 
     if(base1.extensionality_contraction(beliefs1, beliefs_contracted1, beliefs_contracted2, sen, sen)):
@@ -440,4 +472,24 @@ c=Base()
 sen=to_cnf("A&B")
 test_extensionality_contraction(b, c, sen)
 '''
+#Test case for checking the contraction extensionality postulate
+def test_extensionality_expansion(base1: Base, base2: Base, sen):
 
+    beliefs1=base1.getKB()
+
+    beliefs_expanded1=base1.revision_expansion(sen, 2, True)
+    beliefs_expanded2=base2.revision_expansion(sen, 2, True)
+
+
+    if(base1.extensionality_expansion(beliefs1, beliefs_expanded1, beliefs_expanded2, sen, sen)):
+        print("All Good! The expansion did respect the extensionality postulate.")
+    else:
+        print("The expansion did not respect the expansion extensionality postulate.")
+
+#Test case for checking the expansion extensionality postulate
+'''
+b=Base()
+c=Base()
+sen=to_cnf("A&B")
+test_extensionality_expansion(b, c, sen)
+'''
