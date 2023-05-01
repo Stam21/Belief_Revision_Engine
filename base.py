@@ -61,12 +61,28 @@ class Base:
                         return False
         return True
 
-    def success_expansion(self):#GEORGIOS
-        return True
+    # K ∗ p = (K ÷ ¬p) + p Levi identity
+    def success_expansion(self, p):
+        b = Base()
+        b.contraction(~p,0.5)
+        b.expansion(p,0.5)
+        if p in self.beliefs:
+            return True
+        else:
+            return False
+    def vacuity_expansion(self, p):
+        res= False
+        b1 = Base()
+        b2 = Base()
+        b1.beliefs, b2.beliefs = self.beliefs, self.beliefs
+        b1.contraction(~p,0.5)
+        b1.expansion(p, 0.5)
+        b2.expansion(p, 0.5)
+        if (b1==b2):
+            res = True
+        del b1, b2 
+        return res
     
-    def vacuity_expansion(self): # GEORGIOS
-        return True
-
     def inclusion_expansion(self, p): #NEEDS TO BE TESTED
         # K(set of belief) * p(new blief) subset K
         # define set K and p
