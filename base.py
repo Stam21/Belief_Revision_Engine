@@ -12,9 +12,9 @@ def validate_order(p):
 
 class Base:
 
-    def __init__(self):
+    def __init__(self, beliefs=[[10, to_cnf("A & B")],[10, to_cnf("A | B")],[10, to_cnf("B")]]):
         # The belief base is a dictionary that has as keys the name of its sets and as values tuples that store the order and a list of beliefs with that order.
-        self.beliefs = [[10, to_cnf("A & B")],[10, to_cnf("A | B")],[10, to_cnf("B")]]
+        self.beliefs = beliefs
         self.symbols = set()
 
     #----------------------------------------------------------------
@@ -83,31 +83,26 @@ class Base:
         del b1, b2 
         return res
     
-    def inclusion_expansion(self, p): #NEEDS TO BE TESTED
-        # K(set of belief) * p(new blief) subset K
-        # define set K and p
-        K = set(belief[1] for belief in self.beliefs)
-        # check if p is already in K
-        if p in K:
-         return True
+    def inclusion_expansion(self, bb, sen, revisedBb): #NEEDS TO BE TESTED
+        if (self.consistency_expansion(bb,sen)):
+            revisedBbForm = "(" + str(sen) + ")"
+            for elem in revisedBb:
+                revisedBbForm = revisedBbForm + "&(" + str(elem[1]) + ")"
+            bb = deepcopy(bb)
+            bb.append([0,sen])
+            if (entailment(bb, to_cnf(revisedBbForm))):
+                return True
+            else:
+                return False  
+        else:
+            return False
 
-        # Check if K' is a subset of K * p
-        K_p = deepcopy(self.beliefs) # used deepcopy to creat new list of belief K
-        #by copying current belief base (self.belief)add p to it
+    def consistency_expansion(self,bb, sen):
+        statement = "(" + str(sen) + ")"
+        for elem in self.beliefs:
+            statement = statement + "&(" + str(elem[1]) + ")"
 
-        K_p.append([0, p]) #add p to K'
-        for belief in K_p:
-            ## 'And' used to combine multi-belief into single expression for input satisfiable
-            if satisfiable(And(K, set([belief]))) and not satisfiable(And(K_p)):
-                return False  # K * p is not a superset of K + p
-        return True # K * p is a superset of K + p
-
-    def consistency_expansion(self,p): #NEEDS TO BE TESTED
-        # B(K) ∗ φ(p) is consistent if φ(p) is consistent.
-        K_p = deepcopy(self.beliefs)
-        K_p.append([0, p])
-        # Check if B_phi is consistent by checking if it is satisfiable
-        return satisfiable(And(set([belief[1] for belief in K_p])))
+        return satisfiable(to_cnf(statement))
 
 
     def extensionality_expansion(self): #NEEDS TO BE TESTED
@@ -154,24 +149,54 @@ class Base:
      If the agent receives new information that conflicts with one of the beliefs in the knowledge base,
      it will revise its belief base by removing the lower-priority belief and adding the new information in its place.
     '''
+    def testExpansionAGMPostulates(self, bb, revisedBb, sen):
+        if (self.consistency_expansion(bb, sen)):
+            print("The operation was consistent.")
+        else:
+            print("FAIL. The operation was not consistent.")
+            
+        if (self.inclusion_expansion(bb, sen, revisedBb)):
+            print("The operation was inclusive.")
+        else:
+            print("FAIL. The operation was not inclusive.")
+            
+    def testContractionAGMPostulates(self, bb, revisedBb, sen):
+        if (self.consistency_expansion(bb, sen)):
+            print("The operation was consistent.")
+        else:
+            print("FAIL. The operation was not consistent.")
+        if (self.inclusion_expansion(bb, sen, revisedBb)):
+            print("The operation was inclusive.")
+        else:
+            print("FAIL. The operation was not inclusive.")
+    
     def revision(self, sen, action,  order=0):
+        ret = False
+        bb = deepcopy(self.beliefs)
         if action == "c":
-            return self.revision_contraction(sen, order)
+            ret = self.revision_contraction(sen, order)
         elif action == "e":
-            return self.revision_expansion(sen, order)
+            ret = self.revision_expansion(sen, order)
+           
+            
+        if ret:
+            revisedBb = deepcopy(self.beliefs)
+            if action == "c":
+                self.testContractionAGMPostulates(bb, revisedBb, sen)
+            elif action == "e":
+                self.testExpansionAGMPostulates(bb, revisedBb, sen)
+        
+        return ret
+        
+        
 
     def revision_expansion(self, sen, order):
         if (entailment(self.beliefs, sen)):
             print("The new beliefe will not be added in order to prevent redundancy.")
             return False
         else:
-            statement = "(" + str(sen) + ")"
-            for elem in self.beliefs:
-                statement = statement + "&(" + str(elem[1]) + ")"
-
-            if not satisfiable(to_cnf(statement)):
+            if not self.consistency_expansion(self.beliefs, sen):
                 print("The new belief will not be added as it contradicts a previous belief.")
-                #keep the highest order beliefe, if same keep oldest
                 return False
 
             else:
